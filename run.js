@@ -1,20 +1,26 @@
+import {ok} from 'assert';
+
+ok(processe.env.CHAINDATA_PATH, 'CHAINDATA_PATH not specified');
+ok(process.env.BLOCK_STATE_ROOT, 'BLOCK_STATE_ROOT not specified');
+ok(process.env.CONTRACT_ADDRESS, 'CONTRACT_ADDRESS not specified')
+
 var Trie = require('merkle-patricia-tree');
 var rlp = require('rlp');
 var levelup = require('levelup');
 var leveldown = require('leveldown');
-var db = levelup(leveldown('/your_home_dir/Library/Ethereum/rinkeby/geth/chaindata'));
+var db = levelup(leveldown(process.env.CHAINDATA_PATH));
 var keccak256 = require('js-sha3').keccak256;
 
 // the block state root, rinkeby, block number 1775804
 // the block state root can be obtained by invoking web3.eth.getBlock(<blockNumber>) in `stateRoot` field
-var root = '0xe4a6ff741ec2e0d0cd274a745756028df27312161bdb4557b6da434349f716a9';
+var root = process.env.BLOCK_STATE_ROOT;
 var trie = new Trie(db, root);
 
 trie.checkRoot(root, function (err, val) {
   console.log('Root exists:', val);
 });
 
-var address = '398A7A69f3c59181A1ffe34bed11DCb5DF863A8a';
+var address = process.env.CONTRACT_ADDRESS;
 var addressHash = keccak256(Buffer.from(address, 'hex'));
 
 trie.get('0x' + addressHash, function (err, val) {
@@ -38,7 +44,12 @@ trie.get('0x' + addressHash, function (err, val) {
 
   // Read storage slot with index 0
 
-  var slotZeroHash = keccak256(Buffer.from('0000000000000000000000000000000000000000000000000000000000000000', 'hex'));
+  var slotZeroHash = keccak256(
+    Buffer.from(
+      process.env.SLOT, 
+      'hex'
+    )
+  );
   trie.get('0x' + slotZeroHash, function (err, val) {
     var decodedVal = rlp.decode(val);
     console.log('Value at slot 0 - key:', slotZeroHash);
